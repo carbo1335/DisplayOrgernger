@@ -84,10 +84,10 @@ h1 {
 /* Grid for Stage Selection */
 .stage-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 columns */
+    grid-template-columns: repeat(2, 1fr); /* 2 columns for 4 stages */
     gap: 20px;
-    width: 80%;
-    max-width: 800px;
+    width: 60%; /* 너비를 조금 줄여서 중앙 집중 */
+    max-width: 600px;
     z-index: 10;
 }
 
@@ -181,4 +181,29 @@ h1 {
     stroke: #00ff00; /* 초록색 선 */
     stroke-width: 3;
     stroke-linecap: round;
+}
+
+/* Fullscreen Button */
+.fullscreen-btn {
+    position: absolute;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    z-index: 100;
+}
+
+.fullscreen-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.fullscreen-btn.active {
+    background: rgba(255, 255, 255, 0.6);
+    color: #000;
+    font-weight: bold;
 }
