@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인지 테스트 - 2단계</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .instruction-overlay {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ccc;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            pointer-events: none;
+            z-index: 100;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <a href="../index.html" class="back-btn">← 메인으로</a>
+            <span>2단계 테스트</span>
+        </header>
+
+        <main style="padding: 0;">
+            <!-- <div class="instruction-overlay">1 -> 봄 -> 2 -> 여름 -> 3 -> 가을 -> 4 -> 겨울 순서로 누르세요.</div> -->
+            
+            <div id="game-board" class="game-area">
+                <svg id="svg-layer" class="connection-layer"></svg>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const gameBoard = document.getElementById('game-board');
+        const svgLayer = document.getElementById('svg-layer');
+        
+        // 2단계 타겟 순서 정의
+        const targets = ['1', '봄', '2', '여름', '3', '가을', '4', '겨울'];
+        let currentIndex = 0; // 현재 찾아야 할 타겟의 인덱스 (0 ~ 7)
+        let nodes = []; // {id: '1', x: 0, y: 0, element: el}
+        let prevNode = null;
+
+        function initGame() {
+            // 초기화
+            gameBoard.querySelectorAll('.node').forEach(el => el.remove());
+            while (svgLayer.firstChild) {
+                svgLayer.removeChild(svgLayer.firstChild);
+            }
+            nodes = [];
+            currentIndex = 0;
+            prevNode = null;
+
+            const boardRect = gameBoard.getBoundingClientRect();
+            const boardW = boardRect.width;
+            const boardH = boardRect.height;
+            const nodeSize = 60;
+            const padding = 20;
+
+            // 타겟 배열의 요소들을 노드로 생성
+            targets.forEach((text, index) => {
+                createNode(text, boardW, boardH, nodeSize, padding);
+            });
+        }
+
+        function createNode(text, boardW, boardH, nodeSize, padding) {
+            let x, y, overlap;
+            let maxAttempts = 100;
+
+            do {
+                overlap = false;
+                x = Math.random() * (boardW - nodeSize - padding * 2) + padding;
+                y = Math.random() * (boardH - nodeSize - padding * 2) + padding;
+
+                for (let node of nodes) {
+                    const dx = node.x - x;
+                    const dy = node.y - y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < nodeSize + 20) {
+                        overlap = true;
+                        break;
+                    }
+                }
+                maxAttempts--;
+            } while (overlap && maxAttempts > 0);
+
+            const el = document.createElement('div');
+            el.classList.add('node');
+            el.textContent = text;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            
+            // 클릭 이벤트
+            el.addEventListener('click', () => handleNodeClick(text, x, y, nodeSize, el));
+
+            gameBoard.appendChild(el);
+            nodes.push({ id: text, x: x, y: y, element: el });
+        }
+
+        function handleNodeClick(text, x, y, nodeSize, el) {
+            // 현재 순서에 맞는 텍스트인지 확인
+            if (text === targets[currentIndex]) {
+                // 정답 로직
+                
+                if (prevNode) {
+                    drawLine(prevNode.x, prevNode.y, x, y, nodeSize);
+                }
+
+                prevNode = { x, y };
+                currentIndex++;
+
+                // 스타일 변경
+                el.style.borderColor = '#00ff00';
+                el.style.color = '#00ff00';
+
+                // 게임 종료 체크
+                if (currentIndex >= targets.length) {
+                    setTimeout(() => {
+                        alert("2단계 성공! 축하합니다.");
+                        // location.href = 'stage3.html';
+                    }, 200);
+                }
+            } else {
+                // 오답 로직
+                console.log("Wrong target!");
+                // 흔들림 효과 등을 줄 수 있음
+            }
+        }
+
+        function drawLine(x1, y1, x2, y2, nodeSize) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            
+            const radius = nodeSize / 2;
+            const cx1 = x1 + radius;
+            const cy1 = y1 + radius;
+            const cx2 = x2 + radius;
+            const cy2 = y2 + radius;
+
+            line.setAttribute('x1', cx1);
+            line.setAttribute('y1', cy1);
+            line.setAttribute('x2', cx2);
+            line.setAttribute('y2', cy2);
+            line.setAttribute('class', 'connection-line');
+            
+            svgLayer.appendChild(line);
+        }
+
+        window.onload = initGame;
+        window.onresize = initGame;
+
+    </script>
+</body>
+</html>

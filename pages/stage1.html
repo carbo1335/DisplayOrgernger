@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인지 테스트 - 1단계</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* 1단계 전용 추가 스타일 */
+        .instruction-overlay {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ccc;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            pointer-events: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <a href="../index.html" class="back-btn">← 메인으로</a>
+            <span>1단계 테스트</span>
+        </header>
+
+        <main style="padding: 0;"> <!-- 게임 영역을 꽉 채우기 위해 padding 제거 -->
+            <!-- <div class="instruction-overlay">숫자 1부터 8까지 순서대로 누르세요.</div> -->
+            
+            <div id="game-board" class="game-area">
+                <svg id="svg-layer" class="connection-layer"></svg>
+                <!-- 노드들이 자바스크립트로 이곳에 추가됩니다 -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const gameBoard = document.getElementById('game-board');
+        const svgLayer = document.getElementById('svg-layer');
+        const totalNodes = 8;
+        let currentTarget = 1;
+        let nodes = []; // {id: 1, x: 0, y: 0, element: el}
+        let prevNode = null;
+
+        // 게임 초기화
+        function initGame() {
+            // 기존 요소 초기화
+            gameBoard.querySelectorAll('.node').forEach(el => el.remove());
+            while (svgLayer.firstChild) {
+                svgLayer.removeChild(svgLayer.firstChild);
+            }
+            nodes = [];
+            currentTarget = 1;
+            prevNode = null;
+
+            // 보드 크기 측정
+            const boardRect = gameBoard.getBoundingClientRect();
+            // 부모가 relative이므로, 내부 좌표는 0 ~ width/height
+            const boardW = boardRect.width;
+            const boardH = boardRect.height;
+            const nodeSize = 60; // CSS width/height와 동일
+            const padding = 20; // 가장자리 여백
+
+            // 1부터 8까지 노드 생성 및 배치
+            for (let i = 1; i <= totalNodes; i++) {
+                createNode(i, boardW, boardH, nodeSize, padding);
+            }
+        }
+
+        function createNode(num, boardW, boardH, nodeSize, padding) {
+            let x, y, overlap;
+            let maxAttempts = 100;
+
+            // 겹치지 않는 위치 찾기
+            do {
+                overlap = false;
+                x = Math.random() * (boardW - nodeSize - padding * 2) + padding;
+                y = Math.random() * (boardH - nodeSize - padding * 2) + padding;
+
+                // 기존 노드들과의 거리 확인
+                for (let node of nodes) {
+                    const dx = node.x - x;
+                    const dy = node.y - y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < nodeSize + 20) { // 노드 크기 + 최소 간격
+                        overlap = true;
+                        break;
+                    }
+                }
+                maxAttempts--;
+            } while (overlap && maxAttempts > 0);
+
+            // HTML 요소 생성
+            const el = document.createElement('div');
+            el.classList.add('node');
+            el.textContent = num;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            
+            // 클릭 이벤트
+            el.addEventListener('click', () => handleNodeClick(num, x, y, nodeSize, el));
+
+            gameBoard.appendChild(el);
+            nodes.push({ id: num, x: x, y: y, element: el });
+        }
+
+        function handleNodeClick(num, x, y, nodeSize, el) {
+            if (num === currentTarget) {
+                // 정답 로직
+                
+                // 이전 노드가 있다면 선 그리기
+                if (prevNode) {
+                    drawLine(prevNode.x, prevNode.y, x, y, nodeSize);
+                }
+
+                prevNode = { x, y };
+                currentTarget++;
+
+                // 스타일 변경 (선택됨 표시 등 필요시)
+                el.style.borderColor = '#00ff00';
+                el.style.color = '#00ff00';
+
+                // 게임 종료 체크
+                if (currentTarget > totalNodes) {
+                    setTimeout(() => {
+                        alert("1단계 성공! 축하합니다.");
+                        // 필요시 다음 단계 이동 로직
+                        // location.href = 'stage2.html';
+                    }, 200);
+                }
+            } else {
+                // 오답 로직 (필요시 추가, 예: 흔들림 효과)
+                console.log("Wrong number!");
+            }
+        }
+
+        function drawLine(x1, y1, x2, y2, nodeSize) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            
+            // 노드의 중심 좌표 계산
+            const radius = nodeSize / 2;
+            const cx1 = x1 + radius;
+            const cy1 = y1 + radius;
+            const cx2 = x2 + radius;
+            const cy2 = y2 + radius;
+
+            line.setAttribute('x1', cx1);
+            line.setAttribute('y1', cy1);
+            line.setAttribute('x2', cx2);
+            line.setAttribute('y2', cy2);
+            line.setAttribute('class', 'connection-line');
+            
+            svgLayer.appendChild(line);
+        }
+
+        // 페이지 로드 시 게임 시작
+        window.onload = initGame;
+        // 화면 크기 변경 시 재배치 (선택사항, 간단히 리로드)
+        window.onresize = initGame; 
+
+    </script>
+</body>
+</html>
